@@ -1,4 +1,5 @@
 import Firestore from "@google-cloud/firestore"
+import { createHmac } from "crypto";
 
 //Google Cloud Key
 export const GOOGLE_APPLICATION_CREDENTIALS = './key.json';
@@ -19,16 +20,23 @@ export async function createUser(name, surname, email, password) {
         name: name,
         surname: surname,
         email: email,
-        password: password,
+        password: HashPassword(password),
     });
 }
 
 export async function getUser(email) {
-    const docRef = db.collection("users").doc(email);
-    const snapshot = await docRef.where("email","==", email).get();
+    const docRef = db.collection("users")
+    const snapshot = await docRef.where("email", "==", email).get();
     let data = [];
     snapshot.forEach((doc) => {
         data.push(doc.data());
     });
     return data;
+}
+
+export function HashPassword(password) {
+    const hash_key = 'DTLE#17';
+    return createHmac('sha256', hash_key)
+        .update('I love cupcakes')
+        .digest('hex');
 }

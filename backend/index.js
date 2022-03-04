@@ -2,7 +2,7 @@ import Express from "express";
 import cors from "cors"
 import { v4 as uuid } from 'uuid';
 import session from "express-session"
-import { createUser } from "./db.js";
+import { createUser, getUser } from "./db.js";
 
 //Session config
 const config = {
@@ -51,15 +51,27 @@ app.post("/register", (req, res) => {
     const password = req.query.password;
     requests++;
 
-    //Save the user to the database
-    createUser(name,surname,email,password).then((r) => {
-        console.log(r);
-    });
+    getUser(email).then((r) => {
+        //if this email address is not taken
 
-    res.send({ result: "success", email: email, name: name });
+        //r.length = 0, data array is empty, email does not exist in database
+        if (r.length === 0) {
+
+            //Save the user to the database
+            createUser(name, surname, email, password).then((r) => {
+                console.log(r);
+                res.send({ result: "success", email: email, name: name });
+            });       
+        }else{
+            console.log("Account already exists");
+            res.send({ result: "success",reason: "account already exists."});
+        }
+    });
 });
 
 console.log(secretToken);
+
+
 
 app.listen(PORT, () =>
     console.log("Server Listening on port: " + PORT));
