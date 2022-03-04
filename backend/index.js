@@ -1,35 +1,63 @@
 import Express from "express";
 import cors from "cors"
 import { v4 as uuid } from 'uuid';
+import session from "express-session"
+import { createUser } from "./db.js";
+
+//Session config
+const config = {
+    genid: (req) => uuid(),
+    secret: "keyboard cat",
+    cookie: {},
+    resave: false,
+    saveUninitialized: true,
+};
+
 
 const app = Express();
+app.use(cors());
+app.use(session(config));
+
 const PORT = 3001;
 let requests = 0;
 const secretToken = uuid();
 
 app.get("/secret", (req, res) => {
     const token = req.query.token;
-    requests ++;
-    if (token === secretToken){
-        res.send({result: 200, requests: requests, message: "This is a very secret message."});
-    }else{
-        res.send({result: 401,message: "Invalid token!"});
+    requests++;
+    if (token === secretToken) {
+        res.send({ result: 200, requests: requests, message: "This is a very secret message." });
+    } else {
+        res.send({ result: 401, message: "Invalid token!" });
     }
-  });
+});
 
 
 app.post("/login", (req, res) => {
     const email = req.query.email;
     const password = req.query.password;
-    requests ++;
-    if (email == "test@test.com" && password == "123"){
-        res.send("Hello Joe!");
-    }else{
-        res.send("Invalid credentials!");
+    requests++;
+    if (email == "test@test.com" && password == "123") {
+        res.send({ result: "success", name: "David", email: "test@test.com" });
+    } else {
+        res.send({ result: "fail" });
     }
-  });
+});
 
-app.use(cors());
+app.post("/register", (req, res) => {
+    const name = req.query.name;
+    const surname = req.query.surname;
+    const email = req.query.email;
+    const password = req.query.password;
+    requests++;
+
+    //Save the user to the database
+    createUser(name,surname,email,password).then((r) => {
+        console.log(r);
+    });
+
+    res.send({ result: "success", email: email, name: name });
+});
 
 console.log(secretToken);
 
