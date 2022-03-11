@@ -15,7 +15,7 @@ const validatePasswordStrength = (password) => {
 };
 
 //Has to be in letters only
-const validateNameSurname = (input) =>{
+const validateNameSurname = (input) => {
   return String(input).match(
     /^(?=.*[a-z])(?=.*[A-Z])/
   );
@@ -55,15 +55,14 @@ async function submitRegisterInformation() {
   //check if the two passwords match
   //check if name, surname and password fields are not empty
   if (
-   name !== "" && 
-   surname !== "" && 
-   password !== "" && 
-   password === confirm_password && 
-   validateEmail(email) &&
-   validatePasswordStrength(password) && 
-   validateNameSurname(name) && 
-   validateNameSurname(surname)) 
-   {
+    name !== "" &&
+    surname !== "" &&
+    password !== "" &&
+    password === confirm_password &&
+    validateEmail(email) &&
+    validatePasswordStrength(password) &&
+    validateNameSurname(name) &&
+    validateNameSurname(surname)) {
     const headers = {
       "Content-Type": "text/html",
       "Access-Control-Allow-Origin": true,
@@ -78,4 +77,21 @@ async function submitRegisterInformation() {
   } else {
     console.log("Invalid fields.");
   }
+
+  function onSignIn(googleUser) {
+    var profile = googleUser.getBasicProfile();
+    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+    console.log('Name: ' + profile.getName());
+    console.log('Image URL: ' + profile.getImageUrl());
+    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+  }
+
+
+  function signOut() {
+    var auth2 = gapi.auth2.getAuthInstance();
+    auth2.signOut().then(function () {
+      console.log('User signed out.');
+    });
+  }
+
 }

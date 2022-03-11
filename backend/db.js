@@ -36,7 +36,7 @@ export async function getUser(email) {
 
 export function HashPassword(password) {
     const hash_key = 'DTLE#17';
-    return createHmac('sha256', hash_key)
-        .update('I love cupcakes')
+    return createHmac('sha256', password)
+        .update(hash_key)
         .digest('hex');
 }

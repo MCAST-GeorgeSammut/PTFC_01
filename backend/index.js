@@ -2,7 +2,13 @@ import Express from "express";
 import cors from "cors"
 import { v4 as uuid } from 'uuid';
 import session from "express-session"
-import { createUser, getUser } from "./db.js";
+import { createUser, getUser, HashPassword } from "./db.js";
+import { fileURLToPath } from "url";
+import path, { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 
 //Session config
 const config = {
@@ -18,30 +24,49 @@ const app = Express();
 app.use(cors());
 app.use(session(config));
 
+//DELIVERING STATIC FILES
+app.use(Express.static(path.join(__dirname,"../frontend/public/")));
+
 const PORT = 3001;
 let requests = 0;
-const secretToken = uuid();
 
-app.get("/secret", (req, res) => {
-    const token = req.query.token;
-    requests++;
-    if (token === secretToken) {
-        res.send({ result: 200, requests: requests, message: "This is a very secret message." });
-    } else {
-        res.send({ result: 401, message: "Invalid token!" });
-    }
+app.get("/",(req,res) => {
+    res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
+app.get("/login",(req,res) => {
+    res.sendFile(path.join(__dirname, "../frontend/login.html"));
+});
+
+app.get("/register",(req,res) => {
+    res.sendFile(path.join(__dirname, "../frontend/register.html"));
+});
 
 app.post("/login", (req, res) => {
     const email = req.query.email;
     const password = req.query.password;
     requests++;
-    if (email == "test@test.com" && password == "123") {
-        res.send({ result: "success", name: "David", email: "test@test.com" });
-    } else {
-        res.send({ result: "fail" });
-    }
+
+    getUser(email).then((r) => {
+        //if this email address is not taken
+        //r.length = 0, data array is empty, email does not exist in database
+        if (r.length === 1) {
+            if (r[0].password === HashPassword(password)) {
+                //Login valid
+                console.log("Login successful.");
+                res.send({ result: "success", email: email, name: r[0].name });
+            } else {
+                //Passwords do not match
+                console.log("Login failed! Invalid credentials");
+                res.send({ result: "fail", reason: "Invalid credentials." });
+            }
+        } else {
+            console.log("Account does not exist.");
+            res.send({ result: "fail", reason: "account does not exist." });
+        }
+    });
+    // res.send({ result: "success", name: "David", email: "test@test.com" });
+    // res.send({ result: "fail" });
 });
 
 app.post("/register", (req, res) => {
@@ -61,15 +86,15 @@ app.post("/register", (req, res) => {
             createUser(name, surname, email, password).then((r) => {
                 console.log(r);
                 res.send({ result: "success", email: email, name: name });
-            });       
-        }else{
-            console.log("Account already exists");
-            res.send({ result: "success",reason: "account already exists."});
+            }).catch((e) => console.log(e));
+        } else {
+            console.log("Account already exists.");
+            res.send({ result: "fail", reason: "account already exists." });
         }
     });
 });
 
-console.log(secretToken);
+
 
 
 
