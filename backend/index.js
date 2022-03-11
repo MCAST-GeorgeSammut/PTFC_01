@@ -27,7 +27,7 @@ app.use(session(config));
 //DELIVERING STATIC FILES
 app.use(Express.static(path.join(__dirname,"../frontend/public/")));
 
-const PORT = 3001;
+const PORT = 80;
 let requests = 0;
 
 app.get("/",(req,res) => {

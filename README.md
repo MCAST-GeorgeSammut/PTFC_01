@@ -63,3 +63,9 @@ GET - Fetches data
 POST - Sends new data
 PUT - Updates data
 DELETE - Deletes data
+
+### SERVER CONFIG
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+```
