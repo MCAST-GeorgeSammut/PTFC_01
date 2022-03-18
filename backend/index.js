@@ -2,12 +2,46 @@ import Express from "express";
 import cors from "cors"
 import { v4 as uuid } from 'uuid';
 import session from "express-session"
-import { createUser, getUser, HashPassword } from "./db.js";
+import { createUser, getUser, HashPassword, GOOGLE_APPLICATION_CREDENTIALS } from "./db.js";
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
 
+import https from "https";
+import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
+
+const PORT = 443;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const startServerEncrypted = async () => {
+    const sm = new SecretManagerServiceClient({
+        projectId: 'pftc-0000001',
+        keyFilename: GOOGLE_APPLICATION_CREDENTIALS,
+    });
+
+    const [pub] = await sm.accessSecretVersion({
+        name: "projects/292886393633/secrets/PublicKey/versions/1",
+    });
+
+    const [prvt] = await sm.accessSecretVersion({
+        name: "projects/292886393633/secrets/PrivateKey/versions/1",
+    });
+
+    const sslOptions = {
+        key: prvt.payload.data.toString(),
+        cery: pub.payload.data.toString(),
+    };
+
+    https.createServer(sslOptions,app).listen(PORT, () => {
+        console.log("Secure Server Listening on port:" + PORT);
+    });
+};
+
+
+const startServer = () =>{
+    app.listen(PORT, () => console.log("Server Listening on port: " + PORT));
+}
 
 
 //Session config
@@ -25,20 +59,20 @@ app.use(cors());
 app.use(session(config));
 
 //DELIVERING STATIC FILES
-app.use(Express.static(path.join(__dirname,"../frontend/public/")));
+app.use(Express.static(path.join(__dirname, "../frontend/public/")));
 
-const PORT = 80;
+
 let requests = 0;
 
-app.get("/",(req,res) => {
+app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
-app.get("/login",(req,res) => {
+app.get("/login", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/login.html"));
 });
 
-app.get("/register",(req,res) => {
+app.get("/register", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/register.html"));
 });
 
@@ -94,9 +128,5 @@ app.post("/register", (req, res) => {
     });
 });
 
+startServerEncrypted();
 
-
-
-
-app.listen(PORT, () =>
-    console.log("Server Listening on port: " + PORT));
